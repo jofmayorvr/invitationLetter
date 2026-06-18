@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tatlı Ayıcıklar ve Mektup</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: #ffe6eb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Ortadaki Zarf Tasarımı */
+        .envelope-container {
+            position: relative;
+            z-index: 10;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .envelope-container:hover {
+            transform: scale(1.05);
+        }
+
+        .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background-color: #ffb3c6;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            display: flex;
+            justify-content: center;
+            z-index: 3;
+        }
+
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid #ff99b3;
+            border-right: 150px solid #ff99b3;
+            border-bottom: 100px solid transparent;
+            border-top: 100px solid transparent;
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        .envelope::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-bottom: 100px solid #ff80a6;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 100px solid #ff6693;
+            z-index: 6;
+            transform-origin: top;
+            transition: transform 0.5s ease-in-out;
+            pointer-events: none;
+        }
+
+        /* Hover efektiyle zarf açılır ve küçük kağıt ucu görünür */
+        .envelope-container:hover .flap {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        .letter-peek {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            width: 260px;
+            height: 170px;
+            background-color: #fffafb;
+            border-radius: 8px 8px 0 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.6s ease-in-out;
+            z-index: 2;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .envelope-container:hover .letter-peek {
+            transform: translateY(-80px);
+            z-index: 4;
+        }
+
+        .letter-peek span {
+            color: #d6336c;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 10px;
+            animation: pulseText 1.5s infinite;
+        }
+
+        /* Açılan Büyük Mektup Kağıdı (Modal) */
+        .letter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .letter-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .large-paper {
+            background-color: #fffafb;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            transform: translateY(50px) scale(0.9);
+            transition: transform 0.5s ease;
+            position: relative;
+            overflow-y: auto;
+            background-image: repeating-linear-gradient(transparent, transparent 31px, #ffb3c6 32px); /* Çizgili kağıt efekti */
+            background-attachment: local;
+            line-height: 32px;
+            font-size: 1.2rem;
+            color: #4a4a4a;
+        }
+
+        .letter-overlay.active .large-paper {
+            transform: translateY(0) scale(1);
+        }
+
+        /* Özel Kaydırma Çubuğu */
+        .large-paper::-webkit-scrollbar { width: 8px; }
+        .large-paper::-webkit-scrollbar-track { background: #ffe6eb; border-radius: 10px; }
+        .large-paper::-webkit-scrollbar-thumb { background: #ff80a6; border-radius: 10px; }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 1.5rem;
+            color: #ff6693;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+            background: white;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .close-btn:hover {
+            transform: scale(1.1);
+            background-color: #ff6693;
+            color: white;
+        }
+
+        /* Mutlu Ayıcıklar */
+        .bear {
+            font-size: 100px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: happyBounce 2s infinite alternate;
+            z-index: 5;
+            user-select: none;
+        }
+
+        .bear.left { left: 10%; }
+        .bear.right { right: 10%; }
+
+        /* Arka Plan Kalpleri */
+        .floating-hearts {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .f-heart {
+            position: absolute;
+            font-size: 24px;
+            color: #ff80a6;
+            opacity: 0.7;
+            animation: floatUp 6s linear infinite;
+        }
+
+        .f-heart:nth-child(1) { left: 15%; animation-delay: 0s; }
+        .f-heart:nth-child(2) { left: 35%; animation-delay: 2s; font-size: 30px; }
+        .f-heart:nth-child(3) { left: 65%; animation-delay: 1s; font-size: 20px; }
+        .f-heart:nth-child(4) { left: 85%; animation-delay: 3s; }
+        .f-heart:nth-child(5) { left: 50%; animation-delay: 4.5s; font-size: 35px; }
+
+        /* Animasyonlar */
+        @keyframes pulseText {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        @keyframes happyBounce {
+            0% { transform: translateY(-50%) rotate(-5deg); }
+            100% { transform: translateY(-45%) rotate(5deg); }
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0.8; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Mobil Uyum */
+        @media (max-width: 768px) {
+            .bear { font-size: 70px; }
+            .bear.left { left: 5%; top: 15%; transform: none; animation: none; }
+            .bear.right { right: 5%; top: 15%; transform: none; animation: none; }
+            .envelope-container { margin-top: 50px; }
+            .large-paper { width: 95%; padding: 25px; font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="floating-hearts">
+        <div class="f-heart">💖</div>
+        <div class="f-heart">💕</div>
+        <div class="f-heart">💖</div>
+        <div class="f-heart">💕</div>
+        <div class="f-heart">💖</div>
+    </div>
+
+    <div class="bear left">🧸</div>
+
+    <div class="envelope-container" onclick="openLetter()">
+        <div class="flap"></div>
+        <div class="letter-peek">
+            <span>💌 BENİM İÇİN ÇOK DEĞERLİSİN TAM MEKTUBU OKUMAK İÇİN TIKLA 💌</span>
+        </div>
+        <div class="envelope"></div>
+    </div>
+
+    <div class="bear right">🧸</div>
+
+    <div class="letter-overlay" id="letterOverlay" onclick="closeLetter(event)">
+        <div class="large-paper" onclick="event.stopPropagation()"> <div class="close-btn" onclick="closeLetter(event)">✖</div>
+            
+            <h2 style="color: #ff6693; margin-top: 0; text-align: center;">Minnoş Mervecike</h2>
+            
+            <p>
+                💖💖💖💖💖💖💖💖💖 <br><br>
+                Seni ne strese sokmak ne de baskı altında bırakmak istiyorum senin durumun farkıdnayım ve ne kadar çaresiz hissettiğinin de farkıdnayım fakat seni düştüğün bataklıkta yalnız bırakmak istemiyorum mutluluğun benim için çok önemli hem senin için de güzel bir başlangıç olur<br><br>
+                eğerki sen de istersen yarından  başlayarak beraber senin bütlerine hazırlanmak ister misin ? her zaman yanındayım ve destek olmaya hazırım lütfen unutma <3
+                <br><br>
+                💖 BENİM İÇİN ÇOK DEĞERLİSİN 💖
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Mektubu açan fonksiyon
+        function openLetter() {
+            document.getElementById('letterOverlay').classList.add('active');
+        }
+
+        // Mektubu kapatan fonksiyon
+        function closeLetter(event) {
+            // Sadece arka plana veya çarpı işaretine basılırsa kapanır, kağıdın kendisine basılırsa kapanmaz.
+            document.getElementById('letterOverlay').classList.remove('active');
+            event.stopPropagation();
+        }
+    </script>
+</body>
+</html>
